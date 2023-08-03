@@ -47,4 +47,87 @@ else:
 
 # COMMAND ----------
 
+#writing schema and exploding the nested json file
+
+# COMMAND ----------
+
+df=spark.read.format('json').option("inferSchema",True).option('multiline','true').load('dbfs:/FileStore/usedCars.json')
+#df.printSchema()
+df.display()
+
+# COMMAND ----------
+
+from pyspark.sql.types import *
+
+usescars=[
+        StructField("@type", StringType(), True),
+        StructField("adLastUpdated", StringType(), True),
+        StructField("bodyType", StringType(), True)]
+
+brand=[
+            StructField("@type", StringType(), True),
+            StructField("name", StringType(), True)
+        ]
+
+extraFeatures=[
+            StructField("AdRef#", StringType(), True),
+            StructField("Assembly", StringType(), True),
+            StructField("AuctionGrade", StringType(), True),
+            StructField("BatteryCapacity", StringType(), True),
+            StructField("BodyType", StringType(), True),
+            StructField("ChassisNo.", StringType(), True),
+            StructField("Color", StringType(), True),
+            StructField("EngineCapacity", StringType(), True),
+            StructField("ImportDate", StringType(), True),
+            StructField("LastUpdated", StringType(), True),
+            StructField("RegisteredIn", StringType(), True),
+            StructField("Warranty", StringType(), True)
+        ]
+
+
+vehicleEngine=[
+            StructField("@type", StringType(), True),
+            StructField("engineDisplacement", StringType(), True),
+            StructField("vehicleTransmission", StringType(), True)
+        ]
+
+schema = StructType([
+    StructField("usedCars", ArrayType(StructType(usescars)),True),
+        StructField("brand", StructType(brand), True),
+        StructField("color", StringType(), True),
+        StructField("description", StringType(), True),
+        StructField("extraFeatures", StructType(extraFeatures), True),
+        StructField("features", ArrayType(StringType()), True),
+        StructField("fuelType", StringType(), True),
+        StructField("image", StringType(), True),
+        StructField("itemCondition", StringType(), True),
+        StructField("keywords", StringType(), True),
+        StructField("manufacturer", StringType(), True),
+        StructField("mileageFromOdometer", StringType(), True),
+        StructField("model", StringType(), True),
+        StructField("modelDate", IntegerType(), True),
+        StructField("name", StringType(), True),
+        StructField("postedFrom", StringType(), True),
+        StructField("price", IntegerType(), True),
+        StructField("priceCurrency", StringType(), True),
+        StructField("sellerLocation", StringType(), True),
+        StructField("vehicleEngine", StructType(vehicleEngine), True)
+    ])
+
+
+# COMMAND ----------
+
+from pyspark.sql.functions import *
+df=spark.read.format('json').schema(schema).option('multiline','true').load('dbfs:/FileStore/usedCars.json')
+df.display()
+
+# COMMAND ----------
+
+df1= df.withColumn("usedCars",explode_outer("usedCars")).select("*","usedCars.*").drop("usedCars")\
+    .select("*","brand.*").drop("brand").select('*','extraFeatures.*').drop("extraFeatures").select('*','vehicleEngine.*')\
+    .drop('vehicleEngine')
+display(df1)
+
+# COMMAND ----------
+
 
