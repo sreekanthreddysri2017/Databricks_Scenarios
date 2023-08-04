@@ -130,4 +130,24 @@ display(df1)
 
 # COMMAND ----------
 
+data = {"team":{
+    "sreekanth": 20,
+
+    "venu": 30,
+
+    "abhi": 25,
+
+    "mani": 28
+}
+
+}
+
+data_list = [(k, v) for k, v in data["team"].items()]
+
+df = spark.createDataFrame(data_list, ["name","age"])
+
+df.show()
+
+# COMMAND ----------
+
 
