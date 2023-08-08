@@ -130,6 +130,7 @@ df.write.mode('append').option("mergeSchema",True).saveAsTable('emp_demo')
 
 #various ways of optimization
 #delta table optimization
+# optimize command is used to combine smaller files into one larger file
 
 
 # COMMAND ----------
@@ -180,4 +181,60 @@ df.write.mode('append').option("mergeSchema",True).saveAsTable('emp_demo')
 
 # COMMAND ----------
 
+#	Partitioning
+# in pyspark data is partitioned across nodes
 
+# COMMAND ----------
+
+data=[(1,'maheer','male','IT'),(2,'wafa','male','HR'),(3,'asi','female','IT')]
+schema=['id','name','gender','dept']
+df=spark.createDataFrame(data,schema)
+df.show()
+
+# COMMAND ----------
+
+df.write.options(header=True,delimiter=',').partitionBy('dept').mode('overwrite').csv('dbfs:/dbfs/FileStore/mani')
+
+# COMMAND ----------
+
+#df = spark.read.format('csv').load('dbfs:/dbfs/FileStore/mani')
+df= spark.read.option('header', True).csv('dbfs:/dbfs/FileStore/mani')
+df.show()
+
+# COMMAND ----------
+
+#
+
+# COMMAND ----------
+
+#
+
+# COMMAND ----------
+
+# MAGIC %fs
+# MAGIC
+# MAGIC ls dbfs:/dbfs/FileStore/mani
+
+# COMMAND ----------
+
+df1= spark.read.option('header', True).csv('dbfs:/dbfs/FileStore/mani/dept=IT/')
+df1.show()
+
+# COMMAND ----------
+
+#Z-ordering
+#it is an extention of optimize
+#it will pre order the data which will be helpful in performance improvement
+
+# COMMAND ----------
+
+# %sql
+# optimize emp_demo
+# zorder by ()
+
+
+# COMMAND ----------
+
+#Bucketing 
+# it is nothing but spilitting large dataset into  multiple buckets based on certain key
+# when we perform wide transformation on bucketing data it will improve the performance 
