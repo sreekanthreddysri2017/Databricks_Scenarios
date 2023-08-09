@@ -83,4 +83,44 @@ df5.display()
 
 # COMMAND ----------
 
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
+
+spark = SparkSession.builder.appName("ColumnRename").getOrCreate()
+
+data = [("Alice", 25), ("Bob", 30), ("Charlie", 28)]
+columns = ["name", "age"]
+df = spark.createDataFrame(data, columns)
+
+original_column_names = df.columns
+
+new_column_names = ["new_name", "new_age"]
+
+select_expr = [col(original_col).alias(new_col) for original_col, new_col in zip(original_column_names, new_column_names)]
+
+
+df_renamed = df.select(*select_expr)
+
+df_renamed.show()
+
+
+# COMMAND ----------
+
+from pyspark.sql import SparkSession
+
+data = [("Alice", 25), ("Bob", 30), ("Charlie", 28)]
+columns = ["name", "age"]
+df = spark.createDataFrame(data, columns)
+
+original_column_names = df.columns
+new_column_names = ["new_name", "new_age"]
+df_renamed = df
+for original_col, new_col in zip(original_column_names, new_column_names):
+    df_renamed = df_renamed.withColumnRenamed(original_col, new_col)
+
+df_renamed.show()
+
+
+# COMMAND ----------
+
 
