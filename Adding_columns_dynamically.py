@@ -79,7 +79,15 @@ df.show()
 
 # COMMAND ----------
 
-#
+#columns = ['City','State','Country']
+# lit_values = ['Bengaluru','Karnataka','India']
+# def add_multiple_cols(col_names, lit_vals):
+#         df1 = df.withColumn(col_names, lit(lit_vals)) 
+#         df1.display()
+        
+# add_multiple_cols(columns[1], lit_values[1])
+# add_multiple_cols(columns[1], lit_values[1])
+# add_multiple_cols(columns[2], lit_values[2])
 
 # COMMAND ----------
 
