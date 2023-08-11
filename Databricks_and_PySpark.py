@@ -149,7 +149,99 @@ df_with_new_columns.show()
 
 # COMMAND ----------
 
-#
+#Schema checking
+
+# COMMAND ----------
+
+# Databricks notebook source
+#Question: - Read the data from csv file and validate if the dataframe schema defined is similar to that present in the source file
+
+csv_options={'header':True,
+             'inferschema':True,
+             'delimiter':','}
+
+def read_csv(path,csv_options): 
+    return spark.read.options(**csv_options).csv(path)
+
+df=read_csv("dbfs:/FileStore/Book4_1.csv",csv_options)
+display(df)
+
+# COMMAND ----------
+
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+schema=StructType([StructField('Name',StringType(),True),
+                   StructField('Department',StringType(),True)])
+
+# COMMAND ----------
+
+csv_options={'header':True,
+             'inferschema':True,
+             'delimiter':','}
+        
+def read_csv(path,csv_options,schema):
+    return spark.read.options(**csv_options).schema(schema).csv(path)
+
+df=read_csv("dbfs:/FileStore/Book4_1.csv",csv_options,schema)
+display(df)
+
+# COMMAND ----------
+
+# The f before a string, known as an f-string (formatted string literals), is a feature in Python used for string formatting.
+#String formatting is a technique in programming used to create strings with dynamic content by inserting variables or expressions
+# In the given code, sets are used to efficiently compare the columns of a DataFrame with an expected set of column names.
+expected_col=set(["Name","Department","Salary"])
+if set(df.columns)==expected_col:
+    print('all columns is available')
+else:
+    missing_columns=expected_col-set(df.columns)
+    print(f'columns are missing:{missing_columns}')
+
+# COMMAND ----------
+
+data = [("Alice", 100),
+        ("Bob", 150),
+        ("Charlie", 120),
+        ("David", 180),
+        ("Eve", 130)]
+
+columns = ["name", "score"]
+
+df = spark.createDataFrame(data, columns)
+
+
+# COMMAND ----------
+
+from pyspark.sql import SparkSession
+from pyspark.sql.window import Window
+from pyspark.sql.functions import row_number, rank, dense_rank, avg
+
+window_spec = Window.orderBy(df["score"].desc())
+
+# COMMAND ----------
+
+df_with_row_number = df.withColumn("row_number", row_number().over(window_spec))
+
+
+# COMMAND ----------
+
+df_with_rank = df.withColumn("rank", rank().over(window_spec))
+
+
+# COMMAND ----------
+
+df_with_dense_rank = df.withColumn("dense_rank", dense_rank().over(window_spec))
+rolling_window_spec = Window.orderBy(df["score"].desc()).rowsBetween(-2, 2)
+df_with_rolling_avg = df.withColumn("rolling_avg", avg(df["score"]).over(rolling_window_spec))
+
+
+
+# COMMAND ----------
+
+df_with_row_number.show()
+df_with_rank.show()
+df_with_dense_rank.show()
+df_with_rolling_avg.show()
 
 # COMMAND ----------
 
