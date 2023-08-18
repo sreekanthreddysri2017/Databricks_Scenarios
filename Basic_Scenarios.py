@@ -179,4 +179,145 @@ df.withColumn('ful_name',full_name(df.firstName,df.LastName)).show()
 
 # COMMAND ----------
 
+#how to handle double delimiters/multi delimiters in pyspark
+
+dbutils.fs.put("/schenarios/double_pipe.csv","""id||name||loc
+1||ravi||Bangalore
+2||Raj||Chennai
+3||Mahesh||Hyderabad
+4||Prasad||Chennai
+5||Sridhar||Pune
+""",True)
+
+# COMMAND ----------
+
+df = spark.read.csv("/schenarios/double_pipe.csv",header=True,sep="||")
+display(df)
+
+# COMMAND ----------
+
+dbutils.fs.put("/scenarios/multi_sep.csv","""id,name,loc,marks
+1,ravi,Bangalore,35|45|55|65
+2,Raj,Chennai,35|45|55|65
+3,Mahesh,Hyderabad,35|45|55|65
+4,Prasad,Chennai,35|45|55|65
+5,Sridhar,Pune,35|45|55|65
+""",True)
+
+# COMMAND ----------
+
+df_multi = spark.read.csv("/scenarios/multi_sep.csv",header=True)
+display(df_multi)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select split("1|2|3|4","\\|")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC
+# MAGIC select split("1|2|3|4","[|]")
+
+# COMMAND ----------
+
+from pyspark.sql.functions import split,col
+df_multi =df_multi.withColumn("marks_split",split(col("marks"),"[|]"))\
+            .withColumn("SUB1",col("marks_split")[0])\
+            .withColumn("SUB2",col("marks_split")[1])\
+            .withColumn("SUB3",col("marks_split")[2])\
+            .withColumn("SUB4",col("marks_split")[3]).drop("marks_split","marks")
+display(df_multi)
+     
+
+# COMMAND ----------
+
+# how do i select a column name with spaces
+dbutils.fs.put("/schenarios/emp_pipe.csv","""id||last name||loc
+1||ravi||Bangalore
+2||Raj||Chennai
+3||Mahesh||Hyderabad
+4||Prasad||Chennai
+5||Sridhar||Pune
+""",True)
+
+# COMMAND ----------
+
+df = spark.read.csv("/schenarios/emp_pipe.csv",header=True,sep="||")
+display(df)
+
+# COMMAND ----------
+
+df.createOrReplaceTempView('emp_view')
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC
+# MAGIC select id,`last name`from emp_view;
+
+# COMMAND ----------
+
+from pyspark.sql.functions import * 
+from pyspark.sql.types import *
+
+df.withColumn('new_column',col('last name')).show()
+
+# COMMAND ----------
+
+# Removing duplicate rows based on updated date
+
+# COMMAND ----------
+
+dbutils.fs.put("/scenarios/duplicates.csv","""id,name,loc,updated_date
+1,ravi,bangalore,2021-01-01
+1,ravi,chennai,2022-02-02
+1,ravi,Hyderabad,2022-06-10
+2,Raj,bangalore,2021-01-01
+2,Raj,chennai,2022-02-02
+3,Raj,Hyderabad,2022-06-10
+4,Prasad,bangalore,2021-01-01
+5,Mahesh,chennai,2022-02-02
+4,Prasad,Hyderabad,2022-06-10
+""")
+
+# COMMAND ----------
+
+df= spark.read.csv("/scenarios/duplicates.csv",header=True,inferSchema=True)
+df.printSchema()
+
+# COMMAND ----------
+
+display(df)
+
+# COMMAND ----------
+
+from pyspark.sql.functions import col
+display(df.orderBy(col("updated_date").desc()).dropDuplicates(["id"]))
+
+# COMMAND ----------
+
+#Window function with row_number()
+
+# COMMAND ----------
+
+from pyspark.sql.window import Window
+from pyspark.sql.functions import *
+df = df.withColumn("rowid",row_number().over(Window.partitionBy("id").orderBy(col("updated_date").desc())))
+
+# COMMAND ----------
+
+df_uniq = df.filter("rowid=1")
+
+# COMMAND ----------
+
+df_baddata = df.filter("rowid>1")
+
+# COMMAND ----------
+
+display(df_uniq)
+
+# COMMAND ----------
+
 
