@@ -320,4 +320,70 @@ display(df_uniq)
 
 # COMMAND ----------
 
+from pyspark.sql.window import Window
+from pyspark.sql.functions import *
+
+from pyspark.sql import SparkSession
+
+# Create a SparkSession
+spark = SparkSession.builder.appName("filter_example").getOrCreate()
+
+# Assuming you have a DataFrame 'df'
+# Condition 1: Filter rows where "column1" > 10
+# Condition 2: Filter rows where "column2" == "some_value"
+filtered_df = df.filter((df["column1"] > 10) & (df["column2"] == "some_value"))
+
+# Show the filtered DataFrame
+filtered_df.show()
+
+
+# COMMAND ----------
+
+from pyspark.sql import SparkSession
+from pyspark.sql import Row
+
+# Create a SparkSession
+spark = SparkSession.builder.appName("filter_example").getOrCreate()
+
+# Create a list of Row objects to define your data
+data = [
+    Row(name="Alice", age=30),
+    Row(name="Bob", age=25),
+    Row(name="Charlie", age=35),
+    Row(name="David", age=28)
+]
+
+# Create a DataFrame from the list of Row objects
+df = spark.createDataFrame(data)
+
+# Show the initial DataFrame
+print("Initial DataFrame:")
+df.show()
+
+# Apply a filter to select rows where both name is "Alice" and age is greater than 28
+filtered_df = df.filter(df["name"] == "Alice" & df["age"] > 28)
+
+# Show the filtered DataFrame
+print("Filtered DataFrame:")
+filtered_df.show()
+
+
+# COMMAND ----------
+
+options={'header':True,
+        'delimiter':',',
+        'inferschema':True}
+
+
+def read_file(format,path,options):
+    df=spark.read.format(format).options(**options).load(path)
+    return df
+
+# COMMAND ----------
+
+df=read_file('csv','dbfs:/FileStore/sreekanth/Book1.csv',options)
+df.show()
+
+# COMMAND ----------
+
 
