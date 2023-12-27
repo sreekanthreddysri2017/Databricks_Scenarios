@@ -3,7 +3,6 @@ options={'header':True,
         'delimiter':',',
         'inferschema':True}
 
-
 def read_file(format,path,options):
     df=spark.read.format(format).options(**options).load(path)
     return df
@@ -16,7 +15,6 @@ df.show()
 # COMMAND ----------
 
 #adding columns dynamically
-
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
@@ -145,6 +143,9 @@ df.show(truncate=False)
 
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
+
+
+
 employees=[StructField('emp_id',IntegerType(),True),
            StructField('emp_name',StringType(),True)]
     
@@ -162,6 +163,10 @@ response=requests.get('https://gist.githubusercontent.com/pradeeppaikateel/a5caf
 db=spark.sparkContext.parallelize([response.text])
 df=spark.read.option("multiline",True).schema(schema).json(db)
 df.show(truncate=False)
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -199,7 +204,6 @@ df2.write.format('json').mode('overwrite').saveAsTable(f"{database}.{table}")
 
 data=[(1,'maheer',2000,500),(2,'wafa',1000,600),(3,'spark',800,200)]
 schema=['id','name','salary','bonus']
-
 df=spark.createDataFrame(data,schema)
 df.show()
 
@@ -233,6 +237,187 @@ df.show()
 # COMMAND ----------
 
 df.select('*',totalpay(df.salary,df.bonus).alias('tp')).show()
+
+# COMMAND ----------
+
+df.show()
+
+# COMMAND ----------
+
+df1=df.select('id','name',when(df.salary==2000,4000).otherwise(df.salary).alias('salary'))
+df1.show()
+
+# COMMAND ----------
+
+df2=df1.sort(df1.id.desc())
+df3=df2.withColumn('salary',col('salary').cast('int'))
+df2.show()
+
+# COMMAND ----------
+
+df1.show() 
+
+# COMMAND ----------
+
+#date functions in pyspark
+
+# COMMAND ----------
+
+df=spark.range(4)
+df.show()
+
+# COMMAND ----------
+
+df1=df.withColumn('current_date',current_date())
+df1.show()
+
+# COMMAND ----------
+
+df2=df1.withColumn('current_date',date_format(df1.current_date,'yyyy.MM.dd'))
+df2.show()
+
+# COMMAND ----------
+
+df3=df2.withColumn('current_date',to_date(df2.current_date,'yyyy.MM.dd'))
+df3.show()
+
+# COMMAND ----------
+
+#timestamp functions
+
+# COMMAND ----------
+
+df=spark.range(2)
+df.show()
+
+# COMMAND ----------
+
+df1=df.withColumn('currentTimeStamp',current_timestamp())
+df1.show(truncate=False)
+
+# COMMAND ----------
+
+df2=df1.withColumn('stringdateformat',lit('2023-12-15 11-08-34'))
+df2.show()
+
+# COMMAND ----------
+
+df3=df2.withColumn('timestamp',to_timestamp(df2.stringdateformat,'yyyy-MM-dd HH-mm-ss'))
+df3.show()
+
+# COMMAND ----------
+
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+schema=StructType([StructField('Name',StringType(),True),
+                   StructField('Department',StringType(),True)])
+
+# COMMAND ----------
+
+csv_options={'header':True,
+             'inferschema':True,
+             'delimiter':','}
+        
+def read_csv(path,csv_options,schema):
+    return spark.read.options(**csv_options).schema(schema).csv(path)
+
+df=read_csv("dbfs:/FileStore/Book4_1.csv",csv_options,schema)
+display(df)
+
+# COMMAND ----------
+
+# In the given code, sets are used to efficiently compare the columns of a DataFrame with an expected set of column names.
+
+expected_col=set(["Name","Department","Salary"])
+if set(df.columns)==expected_col:
+    print('all columns is available')
+else:
+    missing_columns=expected_col-set(df.columns)
+    print(f'columns are missing:{missing_columns}')
+
+
+# COMMAND ----------
+
+#camelCase
+#snake_case
+#PascalCase
+
+# COMMAND ----------
+
+expectedcols=set(['id','name'])
+if set(df.columns)==ecpectedcols:
+    print('all columns are available')
+else:
+    missing_columns=expected_cols-set(df.columns)
+    print(f"column_,issimf:{missing_columns}")
+
+# COMMAND ----------
+
+
+# Difference between distinct() vs dropDuplicates()
+
+# Import
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.appName('SparkByExamples.com').getOrCreate()
+
+# Prepare data
+data = [("James", "Sales", 3000), \
+    ("Michael", "Sales", 4600), \
+    ("Robert", "Sales", 4600), \
+    ("James", "Sales", 3000)
+  ]
+
+columns= ["employee_name", "department", "salary"]
+
+# Create DataFrame
+df = spark.createDataFrame(data = data, schema = columns)
+df.printSchema()
+df.show(truncate=False)
+
+# Using distinct()
+distinctDF = df.distinct()
+distinctDF.show(truncate=False)
+
+# Using dropDuplicates()
+dropDisDF = df.dropDuplicates(["department","salary"])
+dropDisDF.show(truncate=False)
+
+# Using dropDuplicates() on single column
+dropDisDF = df.dropDuplicates(["salary"]).select("salary")
+dropDisDF.show(truncate=False)
+print(dropDisDF.collect())
+
+
+# COMMAND ----------
+
+#
+
+# COMMAND ----------
+
+df=read_file('csv','dbfs:/FileStore/sreekanth/Book1.csv',options)
+
+# COMMAND ----------
+
+df.show()
+
+# COMMAND ----------
+
+def rev_str(x):
+    new_str=''
+    for i in range(len(x)-1,-1,-1):
+        new_str=new_str+x[i]
+    return new_str
+
+rev_str('sree')
+
+
+# COMMAND ----------
+
+x='sree'
+new_str=''
+for i in range(len(x)-1,-1,-1):
+    new_str=new_str+x[i]
+print(new_str)
 
 # COMMAND ----------
 

@@ -245,4 +245,149 @@ df_with_rolling_avg.show()
 
 # COMMAND ----------
 
+from datetime import datetime
+import pytz
+
+# Get the current time in the UTC timezone using pytz.utc
+current_time_utc = datetime.now(pytz.utc)
+
+# Convert the datetime object to a string
+timestamp_string = str(current_time_utc)
+
+print("Current UTC time:", timestamp_string)
+
+
+# COMMAND ----------
+
+from datetime import datetime
+import pytz
+
+# Get the current time in the UTC timezone using pytz.utc
+current_time_utc = datetime.now(pytz.utc)
+
+# Convert UTC time to Indian Standard Time (IST)
+ist_timezone = pytz.timezone("Asia/Kolkata")
+current_time_ist = current_time_utc.astimezone(ist_timezone)
+
+# Convert the datetime object to a string
+timestamp_string_ist = current_time_ist.strftime("%Y-%m-%d %H:%M:%S %Z%z")
+
+print("Current IST time:", timestamp_string_ist)
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+from pyspark.sql.functions import *
+
+#file location and type
+file_location='dbfs:/FileStore/Book_new_null_77_space.csv'
+file_type='csv'
+
+#csv_options
+infershema=True
+delimiter=','
+header=True
+
+df=spark.read.format(file_type)\
+    .option("inferSchema",infershema)\
+    .option('delimiter',delimiter)\
+    .option('header',header)\
+    .load(file_location)
+
+df.show()
+
+# COMMAND ----------
+
+df1=df.dropna()
+df1.show()
+
+# COMMAND ----------
+
+#df1.filter(df1.Age>17).show()
+
+# COMMAND ----------
+
+from pyspark.sql.functions import *
+df2 = df1.filter((df1.Age > 17) | (df1.Salary > 30000))
+df2.show()
+
+# COMMAND ----------
+
+df2 = df1.filter((df1.Age > 17) & (df1.Salary > 30000))
+df2.show()
+
+# COMMAND ----------
+
+df3 = df1.sort((df1.Salary.desc()))
+df3.show()
+
+# COMMAND ----------
+
+#sort=orderby
+df3 = df1.orderBy(df1.Salary.desc(),df1.Experience.asc())
+df3.show()
+
+# COMMAND ----------
+
+df4=df3.union(df2)
+df4.show()
+
+# COMMAND ----------
+
+df4.dropDuplicates(["Name","Salary"]).show()
+
+# COMMAND ----------
+
+df4.dropDuplicates(["Name","Salary"]).show()
+
+# COMMAND ----------
+
+df4.dropDuplicates().show()
+
+# COMMAND ----------
+
+df4.distinct().show()
+
+# COMMAND ----------
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+# Initialize Spark session
+spark = SparkSession.builder.appName("GroupByExample").getOrCreate()
+
+# Sample DataFrame
+data = [("Alice", "Sales", 5000),
+        ("Bob", "HR", 6000),
+        ("Alice", "Sales", 7500),
+        ("Carol", "Engineering", 8000),
+        ("Bob", "Sales", 4500),
+        ("Carol", "Engineering", 9000)]
+
+columns = ["Name", "Department", "Salary"]
+df = spark.createDataFrame(data, columns)
+
+# Show the original DataFrame
+print("Original DataFrame:")
+df.show()
+
+# Group by "Name" and "Department" and calculate the total salary
+grouped_df = df.groupBy("Name", "Department") \
+               .agg(sum("Salary").alias("TotalSalary"))
+
+# Show the grouped DataFrame
+print("Grouped DataFrame:")
+grouped_df.show()
+
+
+# COMMAND ----------
+
+# in order to use multiple aggregate functions use agg(max('salary'),min('salary'))
+
+# COMMAND ----------
+
 

@@ -18,8 +18,6 @@ schema = StructType([
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC
-# MAGIC
 # MAGIC CREATE TABLE demo.sreekanth.taxis
 # MAGIC (
 # MAGIC   vendor_id int,
