@@ -326,4 +326,239 @@ display(df3)
 
 # COMMAND ----------
 
+spark.conf.set("spark.databricks.delta.formatCheck.enabled", "false")
+
+# COMMAND ----------
+
+options={'header':True,
+         'inferschema':True,
+         'delimiter':','}
+
+def read_csv(format,options,path):
+    return spark.read.format(format).options(**options).load(path)
+    
+ 
+df=read_csv('csv',options,'dbfs:/FileStore/emp_tables/20240105_sales_data.csv')
+
+# COMMAND ----------
+
+display(df)
+
+# COMMAND ----------
+
+def snake_case(x):
+    a=x.lower()
+
+    return a.replace(' ','_')
+
+# COMMAND ----------
+
+from pyspark.sql.types import StructType,StructField,IntegerType,StringType,DateType
+from pyspark.sql.functions import *
+
+a=udf(snake_case,StringType())
+
+lst=list(map(lambda x:snake_case(x),df.columns))
+df1=df.toDF(*lst)
+display(df1)
+
+# COMMAND ----------
+
+df=read_csv('csv',options,'dbfs:/FileStore/emp_tables/20240105_sales_customer.csv')
+
+# COMMAND ----------
+
+display(df)
+
+# COMMAND ----------
+
+lst=list(map(lambda x:snake_case(x),df.columns))
+df1=df.toDF(*lst)
+display(df1)
+
+# COMMAND ----------
+
+df2=df1.withColumn('first_name',split(df1.name,' ')[0]).withColumn('last_name',split(df1.name,' ')[1])
+display(df2)
+
+# COMMAND ----------
+
+df3=df2.withColumn('domain',split(df1.email_id,'@')[0])
+display(df3)
+
+# COMMAND ----------
+
+df4=df3.withColumn('gender',when(df3.gender=='male','M').when(df3.gender=='female','F').otherwise(df3.gender))
+display(df4)
+
+# COMMAND ----------
+
+df5=df4.withColumn('date',split(df4.joining_date,' ')[0]).withColumn('time',split(df4.joining_date,' ')[1])
+display(df5)
+
+# COMMAND ----------
+
+#
+
+# COMMAND ----------
+
+df6=df5.withColumn('date',to_date(df5.date,'dd-MM-yyyy'))
+display(df6)
+
+# COMMAND ----------
+
+df7=df6.withColumn('date',date_format(df6.date,'dd-MM-yyyy')).withColumn('lates_time',current_date())
+display(df7)
+
+# COMMAND ----------
+
+help(to_date)
+
+# COMMAND ----------
+
+df=spark.range(2)
+display(df)
+
+# COMMAND ----------
+
+df1=df.withColumn('currenttimestamp',current_timestamp()).withColumn('timestampinstring',lit('11-25-1018 11:24:36')).withColumn('timestampformat',to_timestamp('timestampinstring','MM-dd-yyyy HH:mm:ss')).withColumn("timestamp_ist", from_utc_timestamp(col("currenttimestamp"), "IST")).withColumn('unixtime',unix_timestamp('timestamp_ist')).withColumn('indiantime',from_unixtime('unixtime'))
+display(df1)
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+df1.select('id',hour('timestamp_ist').alias('hour')).display()
+
+# COMMAND ----------
+
+#window functions
+
+data = [
+    (1, "HR", 50000),
+    (2, "IT", 60000),
+    (3, "Finance", 70000),
+    (4, "HR", 50000),
+    (5, "IT", 60000),
+    (6, "Finance", 70000),
+    (7,"HR",5000)
+]
+
+
+
+columns = ["id", "dept", "salary"]
+df = spark.createDataFrame(data, columns)
+display(df)
+
+# COMMAND ----------
+
+from pyspark.sql.functions import *
+from pyspark.sql.window import Window
+
+window=Window.partitionBy('dept').orderBy('salary')
+
+df1=df.withColumn('row_number',row_number().over(window))
+display(df1)
+
+# COMMAND ----------
+
+df1.repartition(5,'dept').withColumn('partion_id',spark_partition_id()).display()
+
+# COMMAND ----------
+
+rdd=spark.sparkContext.parallelize(range(10),4)
+
+# COMMAND ----------
+
+rdd.glom().collect()
+
+# COMMAND ----------
+
+print('rdd: ',rdd.glom().collect())
+
+# COMMAND ----------
+
+print('rdd: ',rdd.coalesce(2).glom().collect())
+print('rdd: ',rdd.repartition(2).glom().collect())
+
+# COMMAND ----------
+
+#maptype column
+
+data=[('sreekanth',{'colour':'green','brand':'puma'}),\
+    ('reddy',{'colour':'blue','brand':'adidas'})]
+schema=['name','properties']
+
+df=spark.createDataFrame(data,schema)
+df.show()
+df.printSchema()
+
+# COMMAND ----------
+
+from pyspark.sql.types import *
+
+# COMMAND ----------
+
+schema1=StructType([
+    StructField('Name',StringType(),True),
+    StructField('Properties',MapType(StringType(),StringType()))
+])
+df=spark.createDataFrame(data,schema1)
+df.show(truncate=False)
+df.printSchema()
+
+# COMMAND ----------
+
+df1=df.withColumn('brand',df.Properties['brand']).withColumn('colour',df.Properties['colour'])
+df1.show(truncate=False)
+
+# COMMAND ----------
+
+#from json string to maptype
+
+data=[('sreekanth',"{'colour':'green','brand':'puma'}"),\
+    ('reddy',"{'colour':'blue','brand':'adidas'}")]
+schema=['name','properties']
+
+df=spark.createDataFrame(data,schema)
+df.show()
+df.printSchema()
+
+# COMMAND ----------
+
+from pyspark.sql.functions import *
+MapTypeSchema=MapType(StringType(),StringType())
+df1=df.withColumn('mapproperties',from_json(df.properties,MapTypeSchema))
+df1.show(truncate=False)
+
+# COMMAND ----------
+
+data=[('sreekanth',"{'colour':'green','brand':'puma'}"),\
+    ('reddy',"{'colour':'blue','brand':'adidas'}")]
+schema=['name','properties']
+
+df=spark.createDataFrame(data,schema)
+df.show()
+df.printSchema()
+
+# COMMAND ----------
+
+StructTypeSchema=StructType([
+    StructField('colour',StringType(),True),
+    StructField('brand',StringType(),True)
+])
+
+df1=df.withColumn('structproperties',from_json(df.properties,StructTypeSchema))
+df1.show()
+df1.printSchema()
+
+# COMMAND ----------
+
+df2=df1.withColumn('colour',df1.structproperties.colour).withColumn('brand',df1.structproperties.brand)
+df2.show()
+
+# COMMAND ----------
+
 
